@@ -152,7 +152,7 @@ const MapPage: React.FC = () => {
       source: connection.source,
       target: connection.target,
       label: connection.label,
-      type: connection.type === 'feedback' ? 'straight' : 'default',
+      type: connection.type === 'feedback' ? 'straight' : 'smoothstep',
       style: connection.type === 'feedback' ? { stroke: '#ef4444', strokeDasharray: '5,5' } : {},
       animated: connection.type === 'feedback',
     })), []);
@@ -160,7 +160,10 @@ const MapPage: React.FC = () => {
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({
+      ...params,
+      type: 'smoothstep',
+    }, eds)),
     [setEdges]
   );
 
