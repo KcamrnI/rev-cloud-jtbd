@@ -18,6 +18,7 @@ export interface MicroJob {
   detailDescription: string;
   productTeam: string;
   position: { x: number; y: number };
+  sequence?: number;
   notes?: string;
 }
 
@@ -54,14 +55,15 @@ export interface MicroJobNodeData extends Record<string, unknown> {
 
 // CSV Import types
 export interface CSVMicroJobRow {
-  job_domain_stage: string;
-  main_job: string;
+  sequence: number;
   micro_job: string;
-  job_performers: string; // comma-separated names
+  main_job: string;
+  domain: string;
   high_level_description: string;
   detail_description: string;
+  job_performer: string; // comma-separated names
+  job_performer_group: string; // comma-separated groups
   product_team: string;
-  notes?: string;
 }
 
 // UI State types

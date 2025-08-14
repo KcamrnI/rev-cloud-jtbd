@@ -16,6 +16,7 @@ import {
 import { MicroJob, JourneyConnection, JobPerformer, MicroJobNodeData, FilterState } from '../types';
 import MicroJobNode from '../components/MicroJobNode';
 import EdgeEditor from '../components/EdgeEditor';
+import CSVUpload from '../components/CSVUpload';
 
 // Sample data - this will be replaced with CSV import
 const sampleMicroJobs: MicroJob[] = [
@@ -111,9 +112,19 @@ const MapPage: React.FC = () => {
   // Job performer search state
   const [performerSearchTerm, setPerformerSearchTerm] = useState('');
 
+  // CSV data state
+  const [csvMicroJobs, setCsvMicroJobs] = useState<MicroJob[]>([]);
+  const [csvJobPerformers, setCsvJobPerformers] = useState<JobPerformer[]>([]);
+  const [showCSVUpload, setShowCSVUpload] = useState(false);
+  const [hasCSVData, setHasCSVData] = useState(false);
+
+  // Use CSV data if available, otherwise use sample data
+  const currentMicroJobs = hasCSVData ? csvMicroJobs : sampleMicroJobs;
+  const currentJobPerformers = hasCSVData ? csvJobPerformers : sampleJobPerformers;
+
   // Initialize nodes without callback first
   const initialNodes: Node[] = useMemo(() => 
-    sampleMicroJobs.map(microJob => ({
+    currentMicroJobs.map(microJob => ({
       id: microJob.id,
       type: 'microJob',
       position: microJob.position,
@@ -121,13 +132,13 @@ const MapPage: React.FC = () => {
       data: { 
         microJob, 
         jobPerformers: microJob.jobPerformers.map(id => 
-          sampleJobPerformers.find(jp => jp.id === id)!
+          currentJobPerformers.find(jp => jp.id === id)!
         ),
         isHighlighted: false,
         isTeamHighlighted: false,
         isSelected: false,
       } as MicroJobNodeData,
-    })), []);
+    })), [currentMicroJobs, currentJobPerformers]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
@@ -232,26 +243,93 @@ const MapPage: React.FC = () => {
     );
   }, [filters, setNodes]);
 
+  // CSV upload handler
+  const handleCSVData = useCallback((data: { microJobs: MicroJob[], jobPerformers: JobPerformer[] }) => {
+    setCsvMicroJobs(data.microJobs);
+    setCsvJobPerformers(data.jobPerformers);
+    setHasCSVData(true);
+    setShowCSVUpload(false);
+
+    // Auto-generate connections based on sequence
+    const connections: JourneyConnection[] = [];
+    const sortedJobs = data.microJobs.sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+    
+    for (let i = 0; i < sortedJobs.length - 1; i++) {
+      connections.push({
+        id: `auto-${i}`,
+        source: sortedJobs[i].id,
+        target: sortedJobs[i + 1].id,
+        type: 'normal',
+      });
+    }
+
+    // Convert to React Flow edges
+    const autoEdges = connections.map(connection => ({
+      id: connection.id,
+      source: connection.source,
+      target: connection.target,
+      type: 'smoothstep',
+    }));
+
+    setEdges(autoEdges);
+  }, [setEdges]);
+
   // Get unique teams/domains for filtering
   const productTeams = useMemo(() => 
-    Array.from(new Set(sampleMicroJobs.map(mj => mj.productTeam))), []);
+    Array.from(new Set(currentMicroJobs.map(mj => mj.productTeam))), [currentMicroJobs]);
   const domains = useMemo(() => 
-    Array.from(new Set(sampleMicroJobs.map(mj => mj.jobDomainStage))), []);
+    Array.from(new Set(currentMicroJobs.map(mj => mj.jobDomainStage))), [currentMicroJobs]);
   const jobPerformerGroups = useMemo(() => 
-    Array.from(new Set(sampleJobPerformers.map(jp => jp.group))), []);
+    Array.from(new Set(currentJobPerformers.map(jp => jp.group))), [currentJobPerformers]);
 
   // Filter job performers based on search term
   const filteredJobPerformers = useMemo(() => 
-    sampleJobPerformers.filter(jp => 
+    currentJobPerformers.filter(jp => 
       jp.name.toLowerCase().includes(performerSearchTerm.toLowerCase())
-    ), [performerSearchTerm]);
+    ), [performerSearchTerm, currentJobPerformers]);
 
   return (
     <div className="h-screen bg-gray-100 p-6">
       <div className="h-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden flex">
         {/* Left Filter Panel */}
         <div className="w-80 bg-gray-50 border-r border-gray-200 p-6 overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters & Controls</h3>
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-gray-900">Filters & Controls</h3>
+          <button
+            onClick={() => setShowCSVUpload(!showCSVUpload)}
+            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          >
+            {hasCSVData ? 'Upload New' : 'Upload CSV'}
+          </button>
+        </div>
+
+        {/* CSV Upload Modal */}
+        {showCSVUpload && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Upload Journey CSV</h2>
+                <button
+                  onClick={() => setShowCSVUpload(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <CSVUpload onDataLoaded={handleCSVData} />
+            </div>
+          </div>
+        )}
+
+        {hasCSVData && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
+            <p className="text-sm text-green-800">
+              ✅ CSV data loaded: {currentMicroJobs.length} microjobs, {currentJobPerformers.length} performers
+            </p>
+          </div>
+        )}
         
         {/* Job Performer Filter */}
         <div className="mb-4">
