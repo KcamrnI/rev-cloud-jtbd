@@ -72,9 +72,10 @@ const nodeTypes: NodeTypes = {
 
 const MapPage: React.FC = () => {
   const [filters, setFilters] = useState<FilterState>({
-    selectedJobPerformer: null,
-    selectedTeam: null,
-    selectedStage: null,
+    selectedJobPerformers: [],
+    selectedGroups: [],
+    selectedTeams: [],
+    selectedDomains: [],
   });
 
   // Convert micro jobs to React Flow nodes
@@ -90,6 +91,7 @@ const MapPage: React.FC = () => {
         ),
         isHighlighted: false,
         isTeamHighlighted: false,
+        isSelected: false,
       },
     })), []);
 
@@ -118,13 +120,16 @@ const MapPage: React.FC = () => {
     setNodes(nodes => 
       nodes.map(node => {
         const nodeData = node.data as MicroJobNodeData;
-        const isJobPerformerHighlighted = filters.selectedJobPerformer ? 
-          nodeData.microJob.jobPerformers.includes(filters.selectedJobPerformer) : false;
-        const isTeamHighlighted = filters.selectedTeam ? 
-          nodeData.microJob.productTeam === filters.selectedTeam : false;
+        const isJobPerformerHighlighted = filters.selectedJobPerformers.length > 0 ? 
+          nodeData.microJob.jobPerformers.some(id => filters.selectedJobPerformers.includes(id)) : false;
+        const isTeamHighlighted = filters.selectedTeams.length > 0 ? 
+          filters.selectedTeams.includes(nodeData.microJob.productTeam) : false;
+        const isDomainMatch = filters.selectedDomains.length > 0 ? 
+          filters.selectedDomains.includes(nodeData.microJob.jobDomainStage) : true;
         
         return {
           ...node,
+          hidden: !isDomainMatch,
           data: {
             ...nodeData,
             isHighlighted: isJobPerformerHighlighted,
@@ -135,14 +140,19 @@ const MapPage: React.FC = () => {
     );
   }, [filters, setNodes]);
 
-  // Get unique teams for filtering
+  // Get unique teams/domains for filtering
   const productTeams = useMemo(() => 
     Array.from(new Set(sampleMicroJobs.map(mj => mj.productTeam))), []);
+  const domains = useMemo(() => 
+    Array.from(new Set(sampleMicroJobs.map(mj => mj.jobDomainStage))), []);
+  const jobPerformerGroups = useMemo(() => 
+    Array.from(new Set(sampleJobPerformers.map(jp => jp.group))), []);
 
   return (
-    <div className="h-screen bg-gray-50">
-      {/* Filter Controls */}
-      <div className="absolute top-4 left-4 z-10 bg-white rounded-lg shadow-lg p-6 max-w-md">
+    <div className="h-screen bg-gray-100 p-6">
+      <div className="h-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden flex">
+        {/* Left Filter Panel */}
+        <div className="w-80 bg-gray-50 border-r border-gray-200 p-6 overflow-y-auto">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters & Controls</h3>
         
         {/* Job Performer Filter */}
@@ -151,10 +161,10 @@ const MapPage: React.FC = () => {
             Job Performer
           </label>
           <select
-            value={filters.selectedJobPerformer || ''}
+            value={''}
             onChange={(e) => setFilters(prev => ({ 
               ...prev, 
-              selectedJobPerformer: e.target.value || null 
+              selectedJobPerformers: e.target.value ? Array.from(new Set([...prev.selectedJobPerformers, e.target.value])) : prev.selectedJobPerformers 
             }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
@@ -165,6 +175,76 @@ const MapPage: React.FC = () => {
               </option>
             ))}
           </select>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {filters.selectedJobPerformers.map(id => {
+              const performer = sampleJobPerformers.find(jp => jp.id === id);
+              return performer ? (
+                <span key={id} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  {performer.name}
+                  <button
+                    type="button"
+                    onClick={() => setFilters(prev => ({ ...prev, selectedJobPerformers: prev.selectedJobPerformers.filter(pId => pId !== id) }))}
+                    className="flex-shrink-0 ml-1.5 h-3 w-3 rounded-full inline-flex items-center justify-center text-blue-400 hover:bg-blue-200 hover:text-blue-500 focus:outline-none focus:bg-blue-200 focus:text-blue-500"
+                  >
+                    <span className="sr-only">Remove performer</span>
+                    <svg className="h-2 w-2" stroke="currentColor" fill="none" viewBox="0 0 8 8">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M1 1l6 6m0-6L1 7" />
+                    </svg>
+                  </button>
+                </span>
+              ) : null;
+            })}
+          </div>
+        </div>
+
+        {/* Job Performer Group Filter */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Job Performer Groups
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {jobPerformerGroups.map(group => (
+              <button
+                key={group}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  selectedGroups: prev.selectedGroups.includes(group) ? prev.selectedGroups.filter(g => g !== group) : [...prev.selectedGroups, group] 
+                }))}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  filters.selectedGroups.includes(group)
+                    ? 'bg-purple-100 text-purple-800 border-2 border-purple-300'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {group}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Domain Filter Buttons */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Domains
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {domains.map(domain => (
+              <button
+                key={domain}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  selectedDomains: prev.selectedDomains.includes(domain) ? prev.selectedDomains.filter(d => d !== domain) : [...prev.selectedDomains, domain] 
+                }))}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  filters.selectedDomains.includes(domain)
+                    ? 'bg-indigo-100 text-indigo-800 border-2 border-indigo-300'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {domain}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Team Filter Buttons */}
@@ -178,10 +258,10 @@ const MapPage: React.FC = () => {
                 key={team}
                 onClick={() => setFilters(prev => ({ 
                   ...prev, 
-                  selectedTeam: prev.selectedTeam === team ? null : team 
+                  selectedTeams: prev.selectedTeams.includes(team) ? prev.selectedTeams.filter(t => t !== team) : [...prev.selectedTeams, team] 
                 }))}
                 className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
-                  filters.selectedTeam === team
+                  filters.selectedTeams.includes(team)
                     ? 'bg-green-100 text-green-800 border-2 border-green-300'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
@@ -192,36 +272,39 @@ const MapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Clear Filters */}
-        <button
-          onClick={() => setFilters({ selectedJobPerformer: null, selectedTeam: null, selectedStage: null })}
-          className="w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-200 transition-colors"
-        >
-          Clear All Filters
-        </button>
-      </div>
+          {/* Clear Filters */}
+          <button
+            onClick={() => setFilters({ selectedJobPerformers: [], selectedGroups: [], selectedTeams: [], selectedDomains: [] })}
+            className="w-full px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+          >
+            Clear All Filters
+          </button>
+        </div>
 
-      {/* React Flow Canvas */}
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        nodeTypes={nodeTypes}
-        className="bg-gray-50"
-        fitView
-      >
-        <Controls />
-        <MiniMap 
-          nodeColor={(node) => {
-            const nodeData = node.data as MicroJobNodeData;
-            return nodeData.isHighlighted ? '#3B82F6' : 
-                   nodeData.isTeamHighlighted ? '#10B981' : '#6B7280';
-          }}
-        />
-        <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
-      </ReactFlow>
+        {/* Right Canvas Area */}
+        <div className="flex-1 relative">
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            nodeTypes={nodeTypes}
+            className="bg-white"
+            fitView
+          >
+            <Controls />
+            <MiniMap 
+              nodeColor={(node) => {
+                const nodeData = node.data as MicroJobNodeData;
+                return nodeData.isHighlighted ? '#3B82F6' : 
+                       nodeData.isTeamHighlighted ? '#10B981' : '#6B7280';
+              }}
+            />
+            <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
+          </ReactFlow>
+        </div>
+      </div>
     </div>
   );
 };

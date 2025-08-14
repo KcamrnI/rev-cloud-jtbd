@@ -64,9 +64,10 @@ export interface CSVMicroJobRow {
 
 // UI State types
 export interface FilterState {
-  selectedJobPerformer: string | null;
-  selectedTeam: string | null;
-  selectedStage: string | null;
+  selectedJobPerformers: string[];
+  selectedGroups: string[];
+  selectedTeams: string[];
+  selectedDomains: string[];
 }
 
 export interface SearchResult {
