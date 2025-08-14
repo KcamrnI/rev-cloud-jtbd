@@ -16,11 +16,24 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
         : 'border-gray-300 hover:border-gray-400 hover:shadow-xl'
       }
     `}>
-      {/* Input Handle */}
+      {/* Connection Handles */}
       <Handle
         type="target"
         position={Position.Left}
         className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="left"
+      />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="top"
+      />
+      <Handle
+        type="target"
+        position={Position.Bottom}
+        className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="bottom"
       />
 
       {/* Stage Badge */}
@@ -90,11 +103,24 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
         </div>
       )}
 
-      {/* Output Handle */}
+      {/* Output Handles */}
       <Handle
         type="source"
         position={Position.Right}
         className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="right"
+      />
+      <Handle
+        type="source"
+        position={Position.Top}
+        className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="top-out"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="w-3 h-3 bg-gray-400 border-2 border-white"
+        id="bottom-out"
       />
     </div>
   );

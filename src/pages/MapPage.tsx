@@ -15,6 +15,7 @@ import {
 } from '@xyflow/react';
 import { MicroJob, JourneyConnection, JobPerformer, MicroJobNodeData, FilterState } from '../types';
 import MicroJobNode from '../components/MicroJobNode';
+import EdgeEditor from '../components/EdgeEditor';
 
 // Sample data - this will be replaced with CSV import
 const sampleMicroJobs: MicroJob[] = [
@@ -78,6 +79,10 @@ const MapPage: React.FC = () => {
     selectedDomains: [],
   });
 
+  // Edge editing state
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
+  const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
+
   // Convert micro jobs to React Flow nodes
   const initialNodes: Node[] = useMemo(() => 
     sampleMicroJobs.map(microJob => ({
@@ -114,6 +119,37 @@ const MapPage: React.FC = () => {
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
+
+  // Edge click handler for editing
+  const onEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
+    event.stopPropagation();
+    setSelectedEdgeId(edge.id);
+    setEditingEdge(edge);
+  }, []);
+
+  // Save edge changes
+  const handleEdgeSave = useCallback((updatedEdge: Edge) => {
+    setEdges(edges => edges.map(edge => 
+      edge.id === updatedEdge.id ? updatedEdge : edge
+    ));
+    setEditingEdge(null);
+    setSelectedEdgeId(null);
+  }, [setEdges]);
+
+  // Delete edge
+  const handleEdgeDelete = useCallback(() => {
+    if (selectedEdgeId) {
+      setEdges(edges => edges.filter(edge => edge.id !== selectedEdgeId));
+      setEditingEdge(null);
+      setSelectedEdgeId(null);
+    }
+  }, [selectedEdgeId, setEdges]);
+
+  // Cancel edge editing
+  const handleEdgeCancel = useCallback(() => {
+    setEditingEdge(null);
+    setSelectedEdgeId(null);
+  }, []);
 
   // Update nodes when filters change
   React.useEffect(() => {
@@ -289,6 +325,7 @@ const MapPage: React.FC = () => {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onEdgeClick={onEdgeClick}
             nodeTypes={nodeTypes}
             className="bg-white"
             fitView
@@ -303,6 +340,16 @@ const MapPage: React.FC = () => {
             />
             <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           </ReactFlow>
+          
+          {/* Edge Editor */}
+          {editingEdge && (
+            <EdgeEditor
+              edge={editingEdge}
+              onSave={handleEdgeSave}
+              onCancel={handleEdgeCancel}
+              onDelete={handleEdgeDelete}
+            />
+          )}
         </div>
       </div>
     </div>
