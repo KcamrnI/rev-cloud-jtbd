@@ -145,6 +145,12 @@ const MapPage: React.FC = () => {
     [setEdges]
   );
 
+  // Handle clicking on the canvas pane to collapse expanded nodes
+  const onPaneClick = useCallback(() => {
+    // Reset any expanded nodes by updating their internal state
+    // This will be handled by the nodes themselves via a global state or event
+  }, []);
+
   // Edge click handler for editing
   const onEdgeClick = useCallback((event: React.MouseEvent, edge: Edge) => {
     event.stopPropagation();
@@ -351,6 +357,7 @@ const MapPage: React.FC = () => {
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
             onEdgeClick={onEdgeClick}
+            onPaneClick={onPaneClick}
             nodeTypes={nodeTypes}
             className="bg-white"
             fitView
