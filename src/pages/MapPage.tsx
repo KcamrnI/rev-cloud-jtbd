@@ -142,22 +142,33 @@ const MapPage: React.FC = () => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
 
-  // Update nodes with onExpandChange callback after setNodes is available
+  // Update nodes when CSV data changes or initialize with callbacks
   React.useEffect(() => {
-    setNodes(nodes => nodes.map(node => ({
-      ...node,
+    const newNodes = currentMicroJobs.map(microJob => ({
+      id: microJob.id,
+      type: 'microJob',
+      position: microJob.position,
+      zIndex: 1,
       data: {
-        ...node.data,
+        microJob,
+        jobPerformers: microJob.jobPerformers.map(id =>
+          currentJobPerformers.find(jp => jp.id === id)!
+        ),
+        isHighlighted: false,
+        isTeamHighlighted: false,
+        isSelected: false,
         onExpandChange: (isExpanded: boolean) => {
           setNodes(currentNodes => currentNodes.map(currentNode => 
-            currentNode.id === node.id 
+            currentNode.id === microJob.id 
               ? { ...currentNode, zIndex: isExpanded ? 1000 : 1 }
               : currentNode
           ));
         },
       } as MicroJobNodeData,
-    })));
-  }, [setNodes]);
+    }));
+    
+    setNodes(newNodes);
+  }, [currentMicroJobs, currentJobPerformers, setNodes]);
 
   // Convert connections to React Flow edges
   const initialEdges: Edge[] = useMemo(() => 
