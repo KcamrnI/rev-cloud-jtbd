@@ -11,12 +11,19 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
     setIsExpanded(!isExpanded);
   };
 
+  // Effect to update the node's z-index in React Flow when expanded
+  React.useEffect(() => {
+    if (data.onExpandChange) {
+      data.onExpandChange(isExpanded);
+    }
+  }, [isExpanded, data]);
+
   return (
     <div 
       className={`
-        relative bg-white border-2 rounded-lg shadow-md overflow-hidden cursor-pointer
+        bg-white border-2 rounded-lg shadow-md overflow-hidden cursor-pointer
         transition-all duration-300 ease-in-out
-        ${isExpanded ? 'min-w-[320px] max-w-[380px] z-50 shadow-2xl' : 'min-w-[240px] max-w-[280px] z-10'}
+        ${isExpanded ? 'min-w-[320px] max-w-[380px] shadow-2xl' : 'min-w-[240px] max-w-[280px]'}
         ${isHighlighted 
           ? 'border-blue-500 shadow-lg ring-2 ring-blue-300' 
           : isTeamHighlighted
@@ -26,7 +33,9 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
       `}
       onClick={handleNodeClick}
       style={{
-        zIndex: isExpanded ? 1000 : 1,
+        position: isExpanded ? 'relative' : 'relative',
+        zIndex: isExpanded ? 9999 : 'auto',
+        transform: isExpanded ? 'translateZ(0)' : 'none',
       }}
     >
       {/* Connection Handles */}

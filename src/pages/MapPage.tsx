@@ -114,6 +114,7 @@ const MapPage: React.FC = () => {
       id: microJob.id,
       type: 'microJob',
       position: microJob.position,
+      zIndex: 1,
       data: { 
         microJob, 
         jobPerformers: microJob.jobPerformers.map(id => 
@@ -122,8 +123,15 @@ const MapPage: React.FC = () => {
         isHighlighted: false,
         isTeamHighlighted: false,
         isSelected: false,
+        onExpandChange: (isExpanded: boolean) => {
+          setNodes(nodes => nodes.map(node => 
+            node.id === microJob.id 
+              ? { ...node, zIndex: isExpanded ? 1000 : 1 }
+              : node
+          ));
+        },
       },
-    })), []);
+    })), [setNodes]);
 
   // Convert connections to React Flow edges
   const initialEdges: Edge[] = useMemo(() => 
