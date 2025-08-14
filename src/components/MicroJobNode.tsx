@@ -13,8 +13,9 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
 
   // Effect to update the node's z-index in React Flow when expanded
   React.useEffect(() => {
-    if (data.onExpandChange) {
-      data.onExpandChange(isExpanded);
+    const nodeData = data as MicroJobNodeData;
+    if (nodeData.onExpandChange) {
+      nodeData.onExpandChange(isExpanded);
     }
   }, [isExpanded, data]);
 

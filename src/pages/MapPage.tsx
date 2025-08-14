@@ -108,11 +108,9 @@ const MapPage: React.FC = () => {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-
-  // Initialize nodes with onExpandChange callback
-  React.useEffect(() => {
-    const initialNodes: Node[] = sampleMicroJobs.map(microJob => ({
+  // Initialize nodes without callback first
+  const initialNodes: Node[] = useMemo(() => 
+    sampleMicroJobs.map(microJob => ({
       id: microJob.id,
       type: 'microJob',
       position: microJob.position,
@@ -125,16 +123,26 @@ const MapPage: React.FC = () => {
         isHighlighted: false,
         isTeamHighlighted: false,
         isSelected: false,
+      } as MicroJobNodeData,
+    })), []);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+
+  // Update nodes with onExpandChange callback after setNodes is available
+  React.useEffect(() => {
+    setNodes(nodes => nodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
         onExpandChange: (isExpanded: boolean) => {
-          setNodes(nodes => nodes.map(node => 
-            node.id === microJob.id 
-              ? { ...node, zIndex: isExpanded ? 1000 : 1 }
-              : node
+          setNodes(currentNodes => currentNodes.map(currentNode => 
+            currentNode.id === node.id 
+              ? { ...currentNode, zIndex: isExpanded ? 1000 : 1 }
+              : currentNode
           ));
         },
-      },
-    }));
-    setNodes(initialNodes);
+      } as MicroJobNodeData,
+    })));
   }, [setNodes]);
 
   // Convert connections to React Flow edges
@@ -212,7 +220,7 @@ const MapPage: React.FC = () => {
             ...nodeData,
             isHighlighted: isJobPerformerHighlighted,
             isTeamHighlighted: isTeamHighlighted,
-          }
+          } as MicroJobNodeData,
         };
       })
     );
