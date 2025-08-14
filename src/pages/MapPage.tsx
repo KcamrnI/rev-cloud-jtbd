@@ -108,6 +108,9 @@ const MapPage: React.FC = () => {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
 
+  // Job performer search state
+  const [performerSearchTerm, setPerformerSearchTerm] = useState('');
+
   // Initialize nodes without callback first
   const initialNodes: Node[] = useMemo(() => 
     sampleMicroJobs.map(microJob => ({
@@ -237,6 +240,12 @@ const MapPage: React.FC = () => {
   const jobPerformerGroups = useMemo(() => 
     Array.from(new Set(sampleJobPerformers.map(jp => jp.group))), []);
 
+  // Filter job performers based on search term
+  const filteredJobPerformers = useMemo(() => 
+    sampleJobPerformers.filter(jp => 
+      jp.name.toLowerCase().includes(performerSearchTerm.toLowerCase())
+    ), [performerSearchTerm]);
+
   return (
     <div className="h-screen bg-gray-100 p-6">
       <div className="h-full max-w-7xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden flex">
@@ -249,6 +258,29 @@ const MapPage: React.FC = () => {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Job Performer
           </label>
+          
+          {/* Search Input */}
+          <div className="mb-2 relative">
+            <input
+              type="text"
+              placeholder="Search job performers..."
+              value={performerSearchTerm}
+              onChange={(e) => setPerformerSearchTerm(e.target.value)}
+              className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            {performerSearchTerm && (
+              <button
+                onClick={() => setPerformerSearchTerm('')}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {/* Dropdown with filtered results */}
           <select
             value={''}
             onChange={(e) => setFilters(prev => ({ 
@@ -257,8 +289,10 @@ const MapPage: React.FC = () => {
             }))}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
-            <option value="">All Job Performers</option>
-            {sampleJobPerformers.map(jp => (
+            <option value="">
+              {filteredJobPerformers.length === 0 ? 'No performers found' : 'Select from filtered results...'}
+            </option>
+            {filteredJobPerformers.map(jp => (
               <option key={jp.id} value={jp.id}>
                 {jp.name} ({jp.group})
               </option>
@@ -363,7 +397,10 @@ const MapPage: React.FC = () => {
 
           {/* Clear Filters */}
           <button
-            onClick={() => setFilters({ selectedJobPerformers: [], selectedGroups: [], selectedTeams: [], selectedDomains: [] })}
+            onClick={() => {
+              setFilters({ selectedJobPerformers: [], selectedGroups: [], selectedTeams: [], selectedDomains: [] });
+              setPerformerSearchTerm('');
+            }}
             className="w-full px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
           >
             Clear All Filters
