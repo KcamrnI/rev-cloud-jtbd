@@ -48,6 +48,8 @@ export interface MicroJobNodeData extends Record<string, unknown> {
   jobPerformers: JobPerformer[];
   isHighlighted: boolean;
   isTeamHighlighted: boolean;
+  isSelected?: boolean; // Added for node selection
+  onExpandChange?: (isExpanded: boolean) => void; // Added for z-index management
 }
 
 // CSV Import types

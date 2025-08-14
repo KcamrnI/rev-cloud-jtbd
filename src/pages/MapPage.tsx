@@ -108,9 +108,11 @@ const MapPage: React.FC = () => {
   const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
   const [editingEdge, setEditingEdge] = useState<Edge | null>(null);
 
-  // Convert micro jobs to React Flow nodes
-  const initialNodes: Node[] = useMemo(() => 
-    sampleMicroJobs.map(microJob => ({
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+
+  // Initialize nodes with onExpandChange callback
+  React.useEffect(() => {
+    const initialNodes: Node[] = sampleMicroJobs.map(microJob => ({
       id: microJob.id,
       type: 'microJob',
       position: microJob.position,
@@ -131,7 +133,9 @@ const MapPage: React.FC = () => {
           ));
         },
       },
-    })), [setNodes]);
+    }));
+    setNodes(initialNodes);
+  }, [setNodes]);
 
   // Convert connections to React Flow edges
   const initialEdges: Edge[] = useMemo(() => 
@@ -145,7 +149,6 @@ const MapPage: React.FC = () => {
       animated: connection.type === 'feedback',
     })), []);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onConnect = useCallback(
