@@ -280,24 +280,45 @@ const MapPage: React.FC = () => {
             )}
           </div>
 
-          {/* Dropdown with filtered results */}
-          <select
-            value={''}
-            onChange={(e) => setFilters(prev => ({ 
-              ...prev, 
-              selectedJobPerformers: e.target.value ? Array.from(new Set([...prev.selectedJobPerformers, e.target.value])) : prev.selectedJobPerformers 
-            }))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">
-              {filteredJobPerformers.length === 0 ? 'No performers found' : 'Select from filtered results...'}
-            </option>
-            {filteredJobPerformers.map(jp => (
-              <option key={jp.id} value={jp.id}>
-                {jp.name} ({jp.group})
-              </option>
-            ))}
-          </select>
+          {/* Live filtered results */}
+          {performerSearchTerm && (
+            <div className="border border-gray-300 rounded-md max-h-40 overflow-y-auto bg-white">
+              {filteredJobPerformers.length === 0 ? (
+                <div className="px-3 py-2 text-sm text-gray-500 italic">
+                  No performers found
+                </div>
+              ) : (
+                filteredJobPerformers.map(jp => (
+                  <button
+                    key={jp.id}
+                    onClick={() => {
+                      setFilters(prev => ({ 
+                        ...prev, 
+                        selectedJobPerformers: Array.from(new Set([...prev.selectedJobPerformers, jp.id]))
+                      }));
+                      setPerformerSearchTerm(''); // Clear search after selection
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-blue-50 focus:bg-blue-50 focus:outline-none border-b border-gray-100 last:border-b-0 text-sm"
+                    disabled={filters.selectedJobPerformers.includes(jp.id)}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className="w-4 h-4 rounded-full border border-white shadow-sm"
+                        style={{ backgroundColor: jp.color }}
+                      />
+                      <span className={`${filters.selectedJobPerformers.includes(jp.id) ? 'text-gray-400' : 'text-gray-900'}`}>
+                        {jp.name}
+                      </span>
+                      <span className="text-xs text-gray-500">({jp.group})</span>
+                      {filters.selectedJobPerformers.includes(jp.id) && (
+                        <span className="text-xs text-gray-400 ml-auto">Already selected</span>
+                      )}
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
           <div className="mt-2 flex flex-wrap gap-2">
             {filters.selectedJobPerformers.map(id => {
               const performer = sampleJobPerformers.find(jp => jp.id === id);
