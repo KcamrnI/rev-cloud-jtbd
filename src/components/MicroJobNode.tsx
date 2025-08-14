@@ -16,7 +16,7 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
       className={`
         relative bg-white border-2 rounded-lg shadow-md overflow-hidden cursor-pointer
         transition-all duration-300 ease-in-out
-        ${isExpanded ? 'min-w-[320px] max-w-[380px]' : 'min-w-[240px] max-w-[280px]'}
+        ${isExpanded ? 'min-w-[320px] max-w-[380px] z-50 shadow-2xl' : 'min-w-[240px] max-w-[280px] z-10'}
         ${isHighlighted 
           ? 'border-blue-500 shadow-lg ring-2 ring-blue-300' 
           : isTeamHighlighted
@@ -25,6 +25,9 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
         }
       `}
       onClick={handleNodeClick}
+      style={{
+        zIndex: isExpanded ? 1000 : 1,
+      }}
     >
       {/* Connection Handles */}
       <Handle
