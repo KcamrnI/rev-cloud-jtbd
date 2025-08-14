@@ -72,12 +72,7 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
           ))}
         </div>
 
-        {/* Product Team */}
-        <div className="text-center">
-          <span className="inline-block bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded font-medium">
-            {microJob.productTeam}
-          </span>
-        </div>
+
       </div>
 
       {/* Output Handles */}

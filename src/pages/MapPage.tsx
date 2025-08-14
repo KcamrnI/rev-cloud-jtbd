@@ -21,57 +21,57 @@ import EdgeEditor from '../components/EdgeEditor';
 const sampleMicroJobs: MicroJob[] = [
   {
     id: '1',
-    jobDomainStage: 'NGP',
+    jobDomainStage: 'Contract Management',
     mainJob: 'Manage or Renew Contract Post-Sales',
     microJob: 'Activate & Administer Contract',
     jobPerformers: ['jp1', 'jp2'],
     highLevelDescription: 'Initial contract setup and activation',
     detailDescription: 'Complete setup of contract terms, activation of services, and initial administration tasks',
-    productTeam: 'Contract Management',
+    productTeam: 'NGP',
     position: { x: 100, y: 150 },
   },
   {
     id: '2',
-    jobDomainStage: 'NGP',
+    jobDomainStage: 'Analytics',
     mainJob: 'Manage or Renew Contract Post-Sales',
     microJob: 'Activate & Administer Contract',
     jobPerformers: ['jp1', 'jp2'],
     highLevelDescription: 'Monitor and analyze contract performance',
     detailDescription: 'Review contract metrics, obligations, and performance indicators',
-    productTeam: 'Analytics',
+    productTeam: 'NGP',
     position: { x: 400, y: 150 },
   },
   {
     id: '3',
-    jobDomainStage: 'Performance Management',
+    jobDomainStage: 'Finance',
     mainJob: 'Analyze Sales Bookings',
     microJob: 'Activate & Administer Contract',
     jobPerformers: ['jp3'],
     highLevelDescription: 'Ensure proper revenue recognition',
     detailDescription: 'Review contracts to ensure compliance with revenue recognition standards',
-    productTeam: 'Finance',
+    productTeam: 'Performance Management',
     position: { x: 700, y: 150 },
   },
   {
     id: '4',
-    jobDomainStage: 'NGP',
+    jobDomainStage: 'Legal',
     mainJob: 'Process New Contract',
     microJob: 'Review & Validate Terms',
     jobPerformers: ['jp2', 'jp4'],
     highLevelDescription: 'Review incoming contract terms',
     detailDescription: 'Validate contract terms against company policies and legal requirements',
-    productTeam: 'Legal',
+    productTeam: 'NGP',
     position: { x: 250, y: 350 },
   },
   {
     id: '5',
-    jobDomainStage: 'Performance Management',
+    jobDomainStage: 'Analytics',
     mainJob: 'Monitor Performance',
     microJob: 'Generate Reports',
     jobPerformers: ['jp4'],
     highLevelDescription: 'Create performance dashboards',
     detailDescription: 'Generate automated reports on contract performance and compliance',
-    productTeam: 'Analytics',
+    productTeam: 'Performance Management',
     position: { x: 550, y: 350 },
   },
 ];
@@ -286,7 +286,7 @@ const MapPage: React.FC = () => {
         {/* Domain Filter Buttons */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Domains
+            Product Teams
           </label>
           <div className="flex flex-wrap gap-2">
             {domains.map(domain => (
@@ -311,7 +311,7 @@ const MapPage: React.FC = () => {
         {/* Team Filter Buttons */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Product Teams
+            Domains
           </label>
           <div className="flex flex-wrap gap-2">
             {productTeams.map(team => (
