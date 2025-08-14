@@ -55,9 +55,9 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
       {/* White Body Section */}
       <div className="bg-white p-3">
         {/* Job Performers Row */}
-        <div className="flex items-center justify-center gap-3 mb-3">
+        <div className="flex items-start justify-center gap-3 mb-3">
           {jobPerformers.map((performer: any) => (
-            <div key={performer.id} className="flex flex-col items-center">
+            <div key={performer.id} className="flex flex-col items-center w-[60px]">
               <div
                 className="w-8 h-8 rounded-full border-2 border-white shadow-sm flex items-center justify-center text-white text-xs font-bold"
                 style={{ backgroundColor: performer.color }}
@@ -65,7 +65,7 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
               >
                 {performer.name.charAt(0)}
               </div>
-              <span className="text-[10px] text-gray-600 mt-1 text-center max-w-[60px] leading-tight">
+              <span className="text-[10px] text-gray-600 mt-1 text-center leading-tight break-words">
                 {performer.name}
               </span>
             </div>
