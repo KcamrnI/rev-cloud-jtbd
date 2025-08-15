@@ -17,6 +17,7 @@ export interface MicroJob {
   highLevelDescription: string;
   detailDescription: string;
   productTeam: string;
+  phase: string; // Added phase column
   position: { x: number; y: number };
   sequence?: number;
   notes?: string;
@@ -59,10 +60,11 @@ export interface CSVMicroJobRow {
   micro_job: string;
   main_job: string;
   domain: string;
+  phase: string; // Added phase column
   high_level_description: string;
   detail_description: string;
   job_performer: string; // comma-separated names
-  job_performer_group: string; // comma-separated groups
+  job_performer_group?: string; // comma-separated groups (optional)
   product_team: string;
 }
 
@@ -72,6 +74,7 @@ export interface FilterState {
   selectedGroups: string[];
   selectedTeams: string[];
   selectedDomains: string[];
+  selectedPhases: string[]; // Added phase filter
 }
 
 export interface SearchResult {

@@ -1,9 +1,9 @@
-Sequence,Micro Job,Main Job,Domain,High Level Description,Detail Description,Job Performer,Job Performer Group,Product Team
-1,Review Initial Contract,Contract Processing,Legal,Analyze incoming contract terms,Conduct thorough review of contract clauses and legal requirements,Legal Analyst,Legal Team,Contract Management
-2,Validate Customer Information,Customer Onboarding,Sales,Verify customer details and requirements,Cross-reference customer data with internal systems and external sources,Sales Rep,Sales Team,Customer Success
-3,Process Payment Setup,Financial Processing,Finance,Configure payment methods and billing,Set up automated billing cycles and payment processing workflows,Finance Analyst,Finance Team,Revenue Operations
-4,Activate Services,Service Delivery,Operations,Enable customer access to platform,Deploy necessary infrastructure and configure user permissions,Operations Manager,Operations Team,Platform Engineering
-5,Generate Welcome Package,Customer Communication,Marketing,Create personalized onboarding materials,Design and send customized welcome emails and documentation,Marketing Specialist,Marketing Team,Customer Success
-6,Schedule Training Session,Customer Education,Support,Arrange product training for new customer,Coordinate with customer success team to schedule onboarding training,Support Agent,Support Team,Customer Success
-7,Monitor Initial Usage,Performance Tracking,Analytics,Track customer engagement metrics,Set up dashboards and alerts for customer activity monitoring,Data Analyst,Analytics Team,Product Analytics
-8,Conduct First Check-in,Relationship Management,Account Management,Perform 30-day success review,Schedule and execute first milestone review with customer stakeholders,Account Manager,Account Management,Customer Success
+Sequence,Micro Job,Main Job,Domain,Phase,High Level Description,Detail Description,Job Performer,Job Performer Group,Product Team
+1,Review Initial Contract,Contract Processing,Legal,Pre-Sale,Analyze incoming contract terms,Conduct thorough review of contract clauses and legal requirements,Legal Analyst,Legal Team,Contract Management
+2,Validate Customer Information,Customer Onboarding,Sales,Pre-Sale,Verify customer details and requirements,Cross-reference customer data with internal systems and external sources,Sales Rep,Sales Team,Customer Success
+3,Process Payment Setup,Financial Processing,Finance,Onboarding,Configure payment methods and billing,Set up automated billing cycles and payment processing workflows,Finance Analyst,Finance Team,Revenue Operations
+4,Activate Services,Service Delivery,Operations,Onboarding,Enable customer access to platform,Deploy necessary infrastructure and configure user permissions,Operations Manager,Operations Team,Platform Engineering
+5,Generate Welcome Package,Customer Communication,Marketing,Onboarding,Create personalized onboarding materials,Design and send customized welcome emails and documentation,Marketing Specialist,Marketing Team,Customer Success
+6,Schedule Training Session,Customer Education,Support,Onboarding,Arrange product training for new customer,Coordinate with customer success team to schedule onboarding training,Support Agent,Support Team,Customer Success
+7,Monitor Initial Usage,Performance Tracking,Analytics,Growth,Track customer engagement metrics,Set up dashboards and alerts for customer activity monitoring,Data Analyst,Analytics Team,Product Analytics
+8,Conduct First Check-in,Relationship Management,Account Management,Growth,Perform 30-day success review,Schedule and execute first milestone review with customer stakeholders,Account Manager,Account Management,Customer Success

@@ -26,7 +26,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
 
     csvData.forEach(row => {
       const performers = row.job_performer.split(',').map(p => p.trim());
-      const groups = row.job_performer_group.split(',').map(g => g.trim());
+      const groups = row.job_performer_group ? row.job_performer_group.split(',').map(g => g.trim()) : [];
       
       performers.forEach((performer, idx) => {
         if (!performerMap.has(performer)) {
@@ -53,9 +53,9 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
           return performer?.id || '';
         }).filter(id => id);
 
-        // Auto-position nodes in a flow layout
-        const x = 100 + (index % 4) * 300; // 4 columns
-        const y = 150 + Math.floor(index / 4) * 250; // Rows of 250px spacing
+        // Auto-position nodes in a horizontal line
+        const x = 100 + index * 350; // Horizontal spacing of 350px
+        const y = 200; // Fixed vertical position for horizontal line
 
         return {
           id: `job-${index + 1}`,
@@ -66,6 +66,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
           highLevelDescription: row.high_level_description,
           detailDescription: row.detail_description,
           productTeam: row.product_team,
+          phase: row.phase || 'Default Phase',
           position: { x, y },
           sequence: row.sequence,
         };
@@ -90,6 +91,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
           'Main Job': 'main_job',
           'MainJob': 'main_job',
           'Domain': 'domain',
+          'Phase': 'phase',
           'High Level Description': 'high_level_description',
           'High-Level Description': 'high_level_description',
           'Detail Description': 'detail_description',
@@ -124,8 +126,8 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
             return;
           }
 
-          // Validate required fields
-          const requiredFields = ['sequence', 'micro_job', 'main_job', 'domain'];
+          // Validate required fields (job_performer_group is optional)
+          const requiredFields = ['sequence', 'micro_job', 'main_job', 'domain', 'phase', 'job_performer'];
           const firstRow = csvData[0];
           const missingFields = requiredFields.filter(field => !(field in firstRow));
           
@@ -214,7 +216,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
               Drag and drop your CSV file here, or click to browse
             </p>
             <p className="text-xs text-gray-500">
-              Required columns: Sequence, Micro Job, Main Job, Domain
+              Required columns: Sequence, Micro Job, Main Job, Domain, Phase, Job Performer
             </p>
           </>
         )}
@@ -228,7 +230,7 @@ const CSVUpload: React.FC<CSVUploadProps> = ({ onDataLoaded }) => {
       
       <div className="mt-4 text-xs text-gray-600">
         <p className="font-semibold mb-1">Expected CSV format:</p>
-        <p>Sequence, Micro Job, Main Job, Domain, High Level Description, Detail Description, Job Performer, Job Performer Group, Product Team</p>
+        <p>Sequence, Micro Job, Main Job, Domain, Phase, High Level Description, Detail Description, Job Performer, Job Performer Group (optional), Product Team</p>
       </div>
     </div>
   );

@@ -1,0 +1,5 @@
+Sequence,Micro Job,Main Job,Domain,Phase,High Level Description,Detail Description,Job Performer,Product Team
+1,Review Initial Contract,Contract Processing,Legal,Pre-Sale,Analyze incoming contract terms,Conduct thorough review of contract clauses and legal requirements,Legal Analyst,Contract Management
+2,Validate Customer Information,Customer Onboarding,Sales,Pre-Sale,Verify customer details and requirements,Cross-reference customer data with internal systems and external sources,Sales Rep,Customer Success
+3,Process Payment Setup,Financial Processing,Finance,Onboarding,Configure payment methods and billing,Set up automated billing cycles and payment processing workflows,Finance Analyst,Revenue Operations
+4,Activate Services,Service Delivery,Operations,Onboarding,Enable customer access to platform,Deploy necessary infrastructure and configure user permissions,Operations Manager,Platform Engineering

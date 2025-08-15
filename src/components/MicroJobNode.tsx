@@ -24,7 +24,7 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
       className={`
         bg-white border-2 rounded-lg shadow-md overflow-hidden cursor-pointer
         transition-all duration-300 ease-in-out
-        ${isExpanded ? 'min-w-[320px] max-w-[380px] shadow-2xl' : 'min-w-[240px] max-w-[280px]'}
+        ${isExpanded ? 'min-w-[380px] max-w-[450px] h-[400px] shadow-2xl' : 'min-w-[300px] max-w-[350px] h-[200px]'}
         ${isHighlighted 
           ? 'border-blue-500 shadow-lg ring-2 ring-blue-300' 
           : isTeamHighlighted
@@ -61,12 +61,12 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
 
       {!isExpanded ? (
         /* Simple View */
-        <>
-          {/* Blue Header Section */}
-          <div className="bg-blue-600 text-white p-3 relative">
-            {/* Domain Badge */}
-            <div className="absolute top-1 left-1 bg-blue-800 text-white text-[10px] px-2 py-0.5 rounded">
-              {microJob.jobDomainStage}
+        <div className="h-full flex flex-col">
+          {/* Header Section */}
+          <div className={`${microJob.jobDomainStage === 'Product & Pricing' ? 'bg-yellow-500' : 'bg-blue-600'} text-white p-3 relative`}>
+            {/* Product Team Badge */}
+            <div className={`absolute top-1 left-1 ${microJob.jobDomainStage === 'Product & Pricing' ? 'bg-yellow-700' : 'bg-blue-800'} text-white text-[10px] px-2 py-0.5 rounded`}>
+              {microJob.productTeam}
             </div>
             
             {/* Micro Job Title */}
@@ -78,9 +78,9 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
           </div>
 
           {/* White Body Section */}
-          <div className="bg-white p-3">
+          <div className="bg-white flex-1 flex flex-col justify-center p-3">
             {/* Job Performers Row */}
-            <div className="flex items-start justify-center gap-3 mb-3">
+            <div className="flex items-start justify-center gap-4 px-3">
               {jobPerformers.map((performer: any) => (
                 <div key={performer.id} className="flex flex-col items-center w-[60px]">
                   <div
@@ -97,15 +97,15 @@ const MicroJobNode: React.FC<NodeProps> = ({ data }) => {
               ))}
             </div>
           </div>
-        </>
+        </div>
       ) : (
         /* Detailed View */
         <>
-          {/* Blue Header Section - Expanded */}
-          <div className="bg-blue-600 text-white p-4 relative">
-            {/* Domain Badge */}
-            <div className="absolute top-2 left-2 bg-blue-800 text-white text-[10px] px-2 py-0.5 rounded">
-              {microJob.jobDomainStage}
+          {/* Header Section - Expanded */}
+          <div className={`${microJob.jobDomainStage === 'Product & Pricing' ? 'bg-yellow-500' : 'bg-blue-600'} text-white p-4 relative`}>
+            {/* Product Team Badge */}
+            <div className={`absolute top-2 left-2 ${microJob.jobDomainStage === 'Product & Pricing' ? 'bg-yellow-700' : 'bg-blue-800'} text-white text-[10px] px-2 py-0.5 rounded`}>
+              {microJob.productTeam}
             </div>
             
             {/* Micro Job Title (larger) */}

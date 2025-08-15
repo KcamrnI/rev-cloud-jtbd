@@ -39,18 +39,30 @@ const EdgeEditor: React.FC<EdgeEditorProps> = ({ edge, onSave, onCancel, onDelet
           Connection Type
         </label>
         <select
-          value={editedEdge.type || 'smoothstep'}
-          onChange={(e) => setEditedEdge({ 
-            ...editedEdge, 
-            type: e.target.value,
-            style: e.target.value === 'straight' ? { stroke: '#ef4444', strokeDasharray: '5,5' } : {},
-            animated: e.target.value === 'straight'
-          })}
+          value={editedEdge.animated ? 'feedback' : (editedEdge.type || 'smoothstep')}
+          onChange={(e) => {
+            if (e.target.value === 'feedback') {
+              setEditedEdge({ 
+                ...editedEdge, 
+                type: 'smoothstep',
+                style: { stroke: '#ef4444' },
+                animated: true
+              });
+            } else {
+              setEditedEdge({ 
+                ...editedEdge, 
+                type: e.target.value,
+                style: {},
+                animated: false
+              });
+            }
+          }}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="smoothstep">Smooth Step (Default)</option>
-          <option value="straight">Feedback (Dashed)</option>
+          <option value="feedback">Feedback (Red Animated)</option>
           <option value="step">Step</option>
+          <option value="straight">Straight</option>
           <option value="default">Curved</option>
         </select>
       </div>

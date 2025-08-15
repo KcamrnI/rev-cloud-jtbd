@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from 'react';
+import React, { useCallback, useState, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Node,
@@ -17,6 +17,8 @@ import { MicroJob, JourneyConnection, JobPerformer, MicroJobNodeData, FilterStat
 import MicroJobNode from '../components/MicroJobNode';
 import EdgeEditor from '../components/EdgeEditor';
 import CSVUpload from '../components/CSVUpload';
+import { saveJourney, loadJourney, listJourneys } from '../services/journeyService';
+import { Journey } from '../lib/supabase';
 
 // Sample data - this will be replaced with CSV import
 const sampleMicroJobs: MicroJob[] = [
@@ -29,29 +31,32 @@ const sampleMicroJobs: MicroJob[] = [
     highLevelDescription: 'Initial contract setup and activation',
     detailDescription: 'Complete setup of contract terms, activation of services, and initial administration tasks',
     productTeam: 'NGP',
-    position: { x: 100, y: 150 },
+    phase: 'Onboarding',
+    position: { x: 100, y: 200 },
   },
   {
     id: '2',
-    jobDomainStage: 'Analytics',
-    mainJob: 'Manage or Renew Contract Post-Sales',
-    microJob: 'Activate & Administer Contract',
+    jobDomainStage: 'Product & Pricing',
+    mainJob: 'Define Product Strategy',
+    microJob: 'Define Business Goals',
     jobPerformers: ['jp1', 'jp2'],
-    highLevelDescription: 'Monitor and analyze contract performance',
-    detailDescription: 'Review contract metrics, obligations, and performance indicators',
-    productTeam: 'NGP',
-    position: { x: 400, y: 150 },
+    highLevelDescription: 'Establish strategic business objectives',
+    detailDescription: 'Set clear business goals and success metrics for product development',
+    productTeam: 'Product Management',
+    phase: 'Planning',
+    position: { x: 450, y: 200 },
   },
   {
     id: '3',
-    jobDomainStage: 'Finance',
-    mainJob: 'Analyze Sales Bookings',
-    microJob: 'Activate & Administer Contract',
-    jobPerformers: ['jp3'],
-    highLevelDescription: 'Ensure proper revenue recognition',
-    detailDescription: 'Review contracts to ensure compliance with revenue recognition standards',
-    productTeam: 'Performance Management',
-    position: { x: 700, y: 150 },
+    jobDomainStage: 'Product & Pricing',
+    mainJob: 'Develop Pricing Strategy',
+    microJob: 'Define Product Pricing',
+    jobPerformers: ['jp3', 'jp4'],
+    highLevelDescription: 'Set competitive pricing structure',
+    detailDescription: 'Analyze market conditions and develop optimal pricing strategy',
+    productTeam: 'Product Management',
+    phase: 'Analysis',
+    position: { x: 800, y: 200 },
   },
   {
     id: '4',
@@ -61,8 +66,9 @@ const sampleMicroJobs: MicroJob[] = [
     jobPerformers: ['jp2', 'jp4'],
     highLevelDescription: 'Review incoming contract terms',
     detailDescription: 'Validate contract terms against company policies and legal requirements',
-    productTeam: 'NGP',
-    position: { x: 250, y: 350 },
+    productTeam: 'Legal',
+    phase: 'Validation',
+    position: { x: 1150, y: 200 },
   },
   {
     id: '5',
@@ -72,8 +78,9 @@ const sampleMicroJobs: MicroJob[] = [
     jobPerformers: ['jp4'],
     highLevelDescription: 'Create performance dashboards',
     detailDescription: 'Generate automated reports on contract performance and compliance',
-    productTeam: 'Performance Management',
-    position: { x: 550, y: 350 },
+    productTeam: 'Analytics',
+    phase: 'Reporting',
+    position: { x: 1500, y: 200 },
   },
 ];
 
@@ -103,6 +110,7 @@ const MapPage: React.FC = () => {
     selectedGroups: [],
     selectedTeams: [],
     selectedDomains: [],
+    selectedPhases: [],
   });
 
   // Edge editing state
@@ -117,6 +125,15 @@ const MapPage: React.FC = () => {
   const [csvJobPerformers, setCsvJobPerformers] = useState<JobPerformer[]>([]);
   const [showCSVUpload, setShowCSVUpload] = useState(false);
   const [hasCSVData, setHasCSVData] = useState(false);
+
+  // Supabase data state
+  const [currentJourney, setCurrentJourney] = useState<Journey | null>(null);
+  const [availableJourneys, setAvailableJourneys] = useState<Journey[]>([]);
+  const [showJourneyManager, setShowJourneyManager] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<string | null>(null);
+  const [journeyName, setJourneyName] = useState('');
+  const [journeyDescription, setJourneyDescription] = useState('');
 
   // Use CSV data if available, otherwise use sample data
   const currentMicroJobs = hasCSVData ? csvMicroJobs : sampleMicroJobs;
@@ -177,8 +194,8 @@ const MapPage: React.FC = () => {
       source: connection.source,
       target: connection.target,
       label: connection.label,
-      type: connection.type === 'feedback' ? 'straight' : 'smoothstep',
-      style: connection.type === 'feedback' ? { stroke: '#ef4444', strokeDasharray: '5,5' } : {},
+      type: 'smoothstep',
+      style: connection.type === 'feedback' ? { stroke: '#ef4444' } : {},
       animated: connection.type === 'feedback',
     })), []);
 
@@ -240,10 +257,12 @@ const MapPage: React.FC = () => {
           filters.selectedTeams.includes(nodeData.microJob.productTeam) : false;
         const isDomainMatch = filters.selectedDomains.length > 0 ? 
           filters.selectedDomains.includes(nodeData.microJob.jobDomainStage) : true;
+        const isPhaseMatch = filters.selectedPhases.length > 0 ? 
+          filters.selectedPhases.includes(nodeData.microJob.phase) : true;
         
         return {
           ...node,
-          hidden: !isDomainMatch,
+          hidden: !isDomainMatch || !isPhaseMatch,
           data: {
             ...nodeData,
             isHighlighted: isJobPerformerHighlighted,
@@ -254,12 +273,112 @@ const MapPage: React.FC = () => {
     );
   }, [filters, setNodes]);
 
+  // Load available journeys on component mount
+  useEffect(() => {
+    loadAvailableJourneys();
+  }, []);
+
+  const loadAvailableJourneys = async () => {
+    const result = await listJourneys();
+    if (result.success && result.journeys) {
+      setAvailableJourneys(result.journeys);
+    }
+  };
+
+  // Save current journey to Supabase
+  const handleSaveJourney = async () => {
+    if (!journeyName.trim()) {
+      setSaveStatus('Please enter a journey name');
+      return;
+    }
+
+    setIsSaving(true);
+    setSaveStatus(null);
+
+    try {
+      // Convert React Flow edges back to JourneyConnections
+      const connections: JourneyConnection[] = edges.map(edge => ({
+        id: edge.id,
+        source: edge.source,
+        target: edge.target,
+        label: typeof edge.label === 'string' ? edge.label : undefined,
+        type: edge.animated ? 'feedback' : 'normal',
+      }));
+
+      const result = await saveJourney(
+        journeyName,
+        journeyDescription,
+        currentMicroJobs,
+        currentJobPerformers,
+        connections
+      );
+
+      if (result.success) {
+        setSaveStatus('Journey saved successfully!');
+        setCurrentJourney({
+          id: result.journeyId!,
+          name: journeyName,
+          description: journeyDescription,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+        await loadAvailableJourneys();
+        setTimeout(() => setSaveStatus(null), 3000);
+      } else {
+        setSaveStatus(`Error: ${result.error}`);
+      }
+    } catch (error) {
+      setSaveStatus(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Load a journey from Supabase
+  const handleLoadJourney = async (journeyId: string) => {
+    const result = await loadJourney(journeyId);
+    if (result.success && result.data) {
+      const { journey, microJobs, jobPerformers, connections } = result.data;
+      
+      // Update state with loaded data
+      setCsvMicroJobs(microJobs);
+      setCsvJobPerformers(jobPerformers);
+      setHasCSVData(true);
+      setCurrentJourney(journey);
+      setJourneyName(journey.name);
+      setJourneyDescription(journey.description || '');
+
+      // Convert connections to React Flow edges
+      const loadedEdges = connections.map(connection => ({
+        id: connection.id,
+        source: connection.source,
+        target: connection.target,
+        label: connection.label,
+        type: 'smoothstep',
+        style: connection.type === 'feedback' ? { stroke: '#ef4444' } : {},
+        animated: connection.type === 'feedback',
+      }));
+
+      setEdges(loadedEdges);
+      setShowJourneyManager(false);
+      setSaveStatus('Journey loaded successfully!');
+      setTimeout(() => setSaveStatus(null), 3000);
+    } else {
+      setSaveStatus(`Error loading journey: ${result.error}`);
+    }
+  };
+
   // CSV upload handler
   const handleCSVData = useCallback((data: { microJobs: MicroJob[], jobPerformers: JobPerformer[] }) => {
     setCsvMicroJobs(data.microJobs);
     setCsvJobPerformers(data.jobPerformers);
     setHasCSVData(true);
     setShowCSVUpload(false);
+    
+    // Clear current journey when uploading new CSV
+    setCurrentJourney(null);
+    setJourneyName('');
+    setJourneyDescription('');
 
     // Auto-generate connections based on sequence
     const connections: JourneyConnection[] = [];
@@ -285,11 +404,13 @@ const MapPage: React.FC = () => {
     setEdges(autoEdges);
   }, [setEdges]);
 
-  // Get unique teams/domains for filtering
+  // Get unique teams/domains/phases for filtering
   const productTeams = useMemo(() => 
     Array.from(new Set(currentMicroJobs.map(mj => mj.productTeam))), [currentMicroJobs]);
   const domains = useMemo(() => 
     Array.from(new Set(currentMicroJobs.map(mj => mj.jobDomainStage))), [currentMicroJobs]);
+  const phases = useMemo(() => 
+    Array.from(new Set(currentMicroJobs.map(mj => mj.phase))), [currentMicroJobs]);
   const jobPerformerGroups = useMemo(() => 
     Array.from(new Set(currentJobPerformers.map(jp => jp.group))), [currentJobPerformers]);
 
@@ -305,14 +426,105 @@ const MapPage: React.FC = () => {
         {/* Left Filter Panel */}
         <div className="w-80 bg-gray-50 border-r border-gray-200 p-6 overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Filters & Controls</h3>
-          <button
-            onClick={() => setShowCSVUpload(!showCSVUpload)}
-            className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-          >
-            {hasCSVData ? 'Upload New' : 'Upload CSV'}
-          </button>
+          <h3 className="text-lg font-semibold text-gray-900">Journey Controls</h3>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowJourneyManager(!showJourneyManager)}
+              className="px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+            >
+              Manage
+            </button>
+            <button
+              onClick={() => setShowCSVUpload(!showCSVUpload)}
+              className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Upload CSV
+            </button>
+          </div>
         </div>
+
+        {/* Journey Manager Modal */}
+        {showJourneyManager && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 m-4 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-gray-900">Journey Manager</h2>
+                <button
+                  onClick={() => setShowJourneyManager(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Save Current Journey */}
+              <div className="mb-6 p-4 border border-gray-200 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Save Current Journey</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Journey Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter journey name..."
+                      value={journeyName}
+                      onChange={(e) => setJourneyName(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description (optional)</label>
+                    <textarea
+                      placeholder="Describe this journey..."
+                      value={journeyDescription}
+                      onChange={(e) => setJourneyDescription(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <button
+                    onClick={handleSaveJourney}
+                    disabled={isSaving || !journeyName.trim()}
+                    className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isSaving ? 'Saving...' : (currentJourney ? 'Update Journey' : 'Save Journey')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Load Existing Journey */}
+              <div className="p-4 border border-gray-200 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 mb-3">Load Existing Journey</h3>
+                {availableJourneys.length === 0 ? (
+                  <p className="text-gray-500 text-sm italic">No saved journeys found</p>
+                ) : (
+                  <div className="space-y-2">
+                    {availableJourneys.map(journey => (
+                      <div key={journey.id} className="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:bg-gray-50">
+                        <div className="flex-1">
+                          <h4 className="font-medium text-gray-900">{journey.name}</h4>
+                          {journey.description && (
+                            <p className="text-sm text-gray-600 mt-1">{journey.description}</p>
+                          )}
+                          <p className="text-xs text-gray-400 mt-1">
+                            Updated: {new Date(journey.updated_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleLoadJourney(journey.id)}
+                          className="ml-3 px-3 py-1 text-sm bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                        >
+                          Load
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CSV Upload Modal */}
         {showCSVUpload && (
@@ -334,11 +546,34 @@ const MapPage: React.FC = () => {
           </div>
         )}
 
-        {hasCSVData && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-md">
-            <p className="text-sm text-green-800">
-              ✅ CSV data loaded: {currentMicroJobs.length} microjobs, {currentJobPerformers.length} performers
+        {/* Status Messages */}
+        {saveStatus && (
+          <div className={`mb-4 p-3 border rounded-md ${
+            saveStatus.includes('Error') 
+              ? 'bg-red-50 border-red-200 text-red-800'
+              : 'bg-green-50 border-green-200 text-green-800'
+          }`}>
+            <p className="text-sm">{saveStatus}</p>
+          </div>
+        )}
+
+        {currentJourney && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            <p className="text-sm text-blue-800">
+              📊 Current Journey: <strong>{currentJourney.name}</strong>
             </p>
+            {currentJourney.description && (
+              <p className="text-xs text-blue-600 mt-1">{currentJourney.description}</p>
+            )}
+          </div>
+        )}
+
+        {hasCSVData && !currentJourney && (
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            <p className="text-sm text-yellow-800">
+              📋 CSV data loaded: {currentMicroJobs.length} microjobs, {currentJobPerformers.length} performers
+            </p>
+            <p className="text-xs text-yellow-600 mt-1">Remember to save your journey!</p>
           </div>
         )}
         
@@ -458,7 +693,7 @@ const MapPage: React.FC = () => {
         {/* Domain Filter Buttons */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Product Teams
+            Domains
           </label>
           <div className="flex flex-wrap gap-2">
             {domains.map(domain => (
@@ -480,10 +715,10 @@ const MapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Team Filter Buttons */}
+        {/* Product Team Filter Buttons */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Domains
+            Product Teams
           </label>
           <div className="flex flex-wrap gap-2">
             {productTeams.map(team => (
@@ -505,10 +740,35 @@ const MapPage: React.FC = () => {
           </div>
         </div>
 
+        {/* Phase Filter Buttons */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Phases
+          </label>
+          <div className="flex flex-wrap gap-2">
+            {phases.map(phase => (
+              <button
+                key={phase}
+                onClick={() => setFilters(prev => ({ 
+                  ...prev, 
+                  selectedPhases: prev.selectedPhases.includes(phase) ? prev.selectedPhases.filter(p => p !== phase) : [...prev.selectedPhases, phase] 
+                }))}
+                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
+                  filters.selectedPhases.includes(phase)
+                    ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {phase}
+              </button>
+            ))}
+          </div>
+        </div>
+
           {/* Clear Filters */}
           <button
             onClick={() => {
-              setFilters({ selectedJobPerformers: [], selectedGroups: [], selectedTeams: [], selectedDomains: [] });
+              setFilters({ selectedJobPerformers: [], selectedGroups: [], selectedTeams: [], selectedDomains: [], selectedPhases: [] });
               setPerformerSearchTerm('');
             }}
             className="w-full px-4 py-2 bg-gray-700 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
@@ -518,7 +778,7 @@ const MapPage: React.FC = () => {
         </div>
 
         {/* Right Canvas Area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative" style={{ width: '100%', height: '100%' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
